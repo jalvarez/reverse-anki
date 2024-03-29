@@ -1,8 +1,11 @@
+import sys
+import logging
 from anki.collection import Collection, ExportAnkiPackageOptions, DeckIdLimit
-from pathlib import Path
 from anki.decks import Deck
 from .load import load_cards
 from .model import CanonicalCard
+
+_logger = logging.getLogger(__name__)
 
 
 def create_deck(col: Collection, deck_name: str, remove_existing: bool = False) -> Deck:
@@ -31,13 +34,16 @@ def add_card_to_deck(col: Collection, deck_name: str, card: CanonicalCard):
 
 
 def reverse_deck(collection_path: str, deck_name: str) -> str:
+    num_processed_cards = 0
     try:
         col = Collection(collection_path)
         new_deck_name = f"Reversed {deck_name}"
         create_deck(col, new_deck_name)
         existing_cards = load_cards(col, deck_name)
         for card in existing_cards:
+            num_processed_cards += 1
             add_card_to_deck(col, new_deck_name, card.reverse())
+        _logger.info(f"Number of processed cards: {num_processed_cards}")
         return new_deck_name
     finally:
         col.close()
@@ -55,21 +61,14 @@ def export(collection_path: str, deck_name: str, out_path: str):
 
 
 if __name__ == "__main__":
-    collection_path = str(Path.home() / "tmp" / "anki" / "collection.anki2")
+    collection_path = sys.argv[1]
+    deck_name = sys.argv[2]
+    out_path = sys.argv[3]
 
-    out_path = str(Path.home() / "tmp" / "reversed_anki" / "test.apkg")
-
-    # deck_name = "test"
-    # deck = create_deck(collection_path, deck_name, remove_existing=True)
-    # print(deck)
-
-    # card = CanonicalCard("what time is?", "8 o'clock")
-    # note = add_card_to_deck(collection_path, deck_name, card)
-    # print(note.id)
-
-    deck_name = "Monthly findings"
+    logging.basicConfig(level=logging.INFO)
+    _logger.info(f"source collection: {collection_path}")
     new_deck_name = reverse_deck(collection_path, deck_name)
-    print(f"Reversed cards in  the '{new_deck_name} 'deck")
+    _logger.info(f"Reversed cards in the '{new_deck_name} 'deck of {out_path}")
     export(
         collection_path,
         new_deck_name,
