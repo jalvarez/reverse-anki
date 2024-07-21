@@ -3,6 +3,9 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Generator
 from .model import CanonicalCard
+import logging
+
+_logger = logging.getLogger("load")
 
 
 class QuestionrParser(HTMLParser):
@@ -62,21 +65,10 @@ def load_cards(
         question_parts = question_parser.feed(card.question())
         answer_parts = answer_parser.feed(card.answer())
         if len(question_parts) > 0 and len(answer_parts):
-            canonical_card = CanonicalCard(question_parts[0], answer_parts[0])
-            if debug:
-                print(card.description())
-                print("----")
-                print(card.question())
-                print("----")
-                print(card.answer())
-                print("----")
-                for d in question_parts:
-                    print(d)
-                print("----")
-                for d in answer_parts:
-                    print(d)
-                print(f"{card_id}: {canonical_card}")
-                break
+            # _logger.debug(card_id)
+            # _logger.debug(question_parts[0])
+            # _logger.debug(answer_parts[0])
+            canonical_card = CanonicalCard(card_id, question_parts[0], answer_parts[0])
             yield canonical_card
 
 

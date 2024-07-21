@@ -4,11 +4,12 @@ from anki.cards import Card
 
 @dataclass
 class CanonicalCard:
+    id: str
     question: str
     answer: str
 
     def reverse(self) -> "CanonicalCard":
-        return CanonicalCard(self.answer, self.question)
+        return CanonicalCard(self.id, self.answer, self.question)
 
     def get_formatted_question(self) -> str:
         return """<style>.card {

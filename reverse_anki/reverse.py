@@ -1,14 +1,17 @@
+import os
 import sys
 import logging
-from anki.collection import Collection, ExportAnkiPackageOptions, DeckIdLimit
+import logging.config
+from anki.collection import Collection
+from anki.exporting import AnkiPackageExporter
 from anki.decks import Deck
 from .load import load_cards
 from .model import CanonicalCard
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("reverse")
 
 
-def create_deck(col: Collection, deck_name: str, remove_existing: bool = False) -> Deck:
+def create_deck(col: Collection, deck_name: str, remove_existing: bool = True) -> Deck:
     if remove_existing:
         existing_deck = col.decks.by_name(deck_name)
         if existing_deck:
@@ -52,10 +55,10 @@ def reverse_deck(collection_path: str, deck_name: str) -> str:
 def export(collection_path: str, deck_name: str, out_path: str):
     try:
         col = Collection(collection_path)
-        options = ExportAnkiPackageOptions()
         deck = col.decks.by_name(deck_name)
-        limit = DeckIdLimit(deck_id=deck["id"])
-        col.export_anki_package(out_path=out_path, options=options, limit=limit)
+        e = AnkiPackageExporter(col)
+        e.did = deck["id"]
+        e.exportInto(out_path)
     finally:
         col.close()
 
@@ -65,7 +68,11 @@ if __name__ == "__main__":
     deck_name = sys.argv[2]
     out_path = sys.argv[3]
 
-    logging.basicConfig(level=logging.INFO)
+    logging.config.fileConfig(fname="reverse_anki/resources/logging_config.ini")
+    if os.path.exists(out_path):
+        os.remove(out_path)
+        _logger.info(f"{out_path} deleted")
+
     _logger.info(f"source collection: {collection_path}")
     new_deck_name = reverse_deck(collection_path, deck_name)
     _logger.info(f"Reversed cards in the '{new_deck_name} 'deck of {out_path}")
